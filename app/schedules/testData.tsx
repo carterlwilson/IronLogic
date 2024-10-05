@@ -34,6 +34,12 @@ export type ActualGroup = {
     actualPercentage: number;
 }
 
+export type activityTemplate = {
+    title: string;
+    groupId: string;
+    id: string;
+}
+
 export const blockGroups: TargetGroup[] = [
     {
         name: "Snatch",
@@ -118,5 +124,38 @@ export const testBlocks: Block[] = [
             }
         ],
         groups: blockGroups
+    }
+];
+
+export const testActivityTemplates: activityTemplate[] = [
+    {
+        title: "Snatch",
+        groupId: "1",
+        id: "1"
+    },
+    {
+        title: "Clean and Jerk",
+        groupId: "2",
+        id: "2"
+    },
+    {
+        title: "Front Squat",
+        groupId: "4",
+        id: "3"
+    },
+    {
+        title: "Back Squat",
+        groupId: "4",
+        id: "4"
+    },
+    {
+        title: "Bench Press",
+        groupId: "3",
+        id: "5"
+    },
+    {
+        title: "Deadlift",
+        groupId: "4",
+        id: "6"
     }
 ];

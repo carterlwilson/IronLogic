@@ -1,12 +1,23 @@
 "use client"
 
-import { Accordion, Box, Button, Container, Flex, NumberInput, Table, Title, Text } from "@mantine/core"
+import { Accordion, Box, Button, Container, Flex, NumberInput, Table, Title, Text, ActionIcon, Modal, Select, Group } from "@mantine/core"
 import React from "react";
 import { useState } from "react";
-import { Block, TargetGroup, ActualGroup, testBlocks, Week, blockGroups } from "./testData";
+import { Block, TargetGroup, ActualGroup, testBlocks, Week, blockGroups, Day, testActivityTemplates, Activity } from "./testData";
+import { IconTrash } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
 
 const SchedulesPage = () => {
     const [blocks, setBlocks] = useState<Block[]>(testBlocks);
+    const [selectedDay, setSelectedDay] = useState<number | null>(null);
+    const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+    const [selectedBlockForActivity, setSelectedBlockForActivity] = useState<number | null>(null);
+    const [selectedWeekForActivity, setSelectedWeekForActivity] = useState<number | null>(null);
+    const [selectedDayForActivity, setSelectedDayForActivity] = useState<number | null>(null);
+
+    const [isAddActivityModalOpen, { open: openAddActivityModal, close: closeAddActivityModal }] = useDisclosure(false);
+
+
     const addWeekToBlock = (index: number) => {
         const updatedBlocks = [...blocks];
         const newWeek = {
@@ -76,11 +87,84 @@ const SchedulesPage = () => {
         }, 0);
     };
 
+    const addNewBlock = () => {
+        if (blocks.length > 0) {
+            var newBlock = {...blocks[blocks.length - 1]};
+            newBlock.title = `Block ${blocks.length + 1}`;
+            newBlock.weeks = blocks[blocks.length - 1].weeks;
+            setBlocks([...blocks, newBlock]);
+        } else {
+            const newWeeks: Week[] = [1, 2, 3, 4].map((weekNumber) => {
+                const newWeek: Week = {
+                    title: `Week ${weekNumber}`,
+                    days: [],
+                    goalReps: 0
+                }
+                return newWeek;
+            })
+            var newBlock: Block = {
+                title: `Block ${blocks.length + 1}`,
+                weeks: newWeeks,
+                groups: blockGroups
+            };
+        }
+        setBlocks([...blocks, newBlock]);
+    };
 
+    const addNewDay = (blockIndex: number, weekIndex: number) => {
+        const updatedBlocks = [...blocks];
+        const daysLength = updatedBlocks[blockIndex].weeks[weekIndex].days.length;
+        if (daysLength > 0) {
+            var newDay = {...blocks[blockIndex].weeks[weekIndex].days[daysLength - 1]};
+            newDay.title = `Day ${updatedBlocks[blockIndex].weeks[weekIndex].days.length + 1}`;
+        } else {
+            var newDay: Day = {
+                title: "Day 1",
+                activities: [],
+            }
+        }
+        updatedBlocks[blockIndex].weeks[weekIndex].days.push(newDay);
+        setBlocks(updatedBlocks);
+    }
+
+    const deleteActivity = (blockIndex: number, weekIndex: number, dayIndex: number, activityIndex: number) => {
+        const updatedBlocks = [...blocks];
+        updatedBlocks[blockIndex].weeks[weekIndex].days[dayIndex].activities.splice(activityIndex, 1);
+        setBlocks(updatedBlocks);
+    }
+
+    const handleAddActivity = () => {
+        if (selectedActivityId) {
+            const selectedTemplate = testActivityTemplates.find(template => template.id === selectedActivityId);
+            if (selectedTemplate) {
+                const newActivity: Activity = {
+                    title: selectedTemplate.title,
+                    groupId: selectedTemplate.groupId,
+                    reps: 0
+                }
+                const updatedBlocks = [...blocks];
+                if (selectedBlockForActivity !== null && selectedWeekForActivity !== null && selectedDayForActivity !== null) {
+                    updatedBlocks[selectedBlockForActivity].weeks[selectedWeekForActivity].days[selectedDayForActivity].activities.push(newActivity);
+                    setBlocks(updatedBlocks);
+                }
+            }
+        }
+    }
+
+    const openAddActivityModalAndSetIndexes = (blockIndex: number, weekIndex: number, dayIndex: number) => {
+        setSelectedBlockForActivity(blockIndex);
+        setSelectedWeekForActivity(weekIndex);
+        setSelectedDayForActivity(dayIndex);
+        openAddActivityModal();
+    }
+    
 
     return (
         <Container size="xl">
             <Title order={1} mb="md">Schedules</Title>
+            <Button mb="md" onClick={addNewBlock}>
+                Add New Block
+            </Button>
             <Accordion>
                 {blocks.map((block, blockIndex) => (
                     <Accordion.Item key={blockIndex} value={block.title}>
@@ -144,40 +228,62 @@ const SchedulesPage = () => {
                                                             </Flex>
                                                             <Text>Actual Reps: {getTotalRepsForWeek(week)}</Text>
                                                         </Flex>
-
+                                                        <Button mb="md" onClick={() => {
+                                                            addNewDay(blockIndex, weekIndex);
+                                                        }}>
+                                                            Add Day
+                                                        </Button>
                                                         <Title order={4} mb="md">Activities</Title>         
-                                                        <Table striped highlightOnHover withTableBorder>
-                                                            <Table.Thead>
-                                                                <Table.Tr>
-                                                                    <Table.Th>Activity</Table.Th>
-                                                                    <Table.Th>Reps</Table.Th>
-                                                                </Table.Tr>
-                                                            </Table.Thead>
-                                                            <Table.Tbody>
+                                                        <Flex>
+                                                            <Box style={{ width: '30%', marginRight: '20px' }}>
                                                                 {week.days.map((day, dayIndex) => (
-                                                                    <React.Fragment key={dayIndex}>
-                                                                        <Table.Tr>
-                                                                            <Table.Td colSpan={2}><strong>{day.title}</strong></Table.Td>
-                                                                        </Table.Tr>
-                                                                        {day.activities.map((activity, activityIndex) => (
-                                                                            <Table.Tr key={`${dayIndex}-${activityIndex}`}>
-                                                                                <Table.Td>{activity.title}</Table.Td>
-                                                                                <Table.Td>
-                                                                                    <NumberInput
-                                                                                        value={activity.reps}
-                                                                                        onChange={(value) => {
-                                                                                            updateActivityReps(blockIndex, weekIndex, dayIndex, activityIndex, Number(value));
-                                                                                        }}
-                                                                                        min={0}
-                                                                                        style={{ width: '80px' }}
-                                                                                    />
-                                                                                </Table.Td>
-                                                                            </Table.Tr>
-                                                                        ))}
-                                                                    </React.Fragment>
+                                                                    <Button
+                                                                        key={dayIndex}
+                                                                        variant="outline"
+                                                                        fullWidth
+                                                                        mb="sm"
+                                                                        onClick={() => setSelectedDay(dayIndex)}
+                                                                        style={{ justifyContent: 'flex-start' }}
+                                                                    >
+                                                                        {day.title}
+                                                                    </Button>
                                                                 ))}
-                                                            </Table.Tbody>
-                                                        </Table>
+                                                            </Box>
+                                                            <Box style={{ width: '70%' }}>
+                                                                {selectedDay !== null && (
+                                                                    <div>
+                                                                        <Button onClick={() => openAddActivityModalAndSetIndexes(blockIndex, weekIndex, selectedDay)}>Add Activity</Button>
+                                                                        <Table striped highlightOnHover withTableBorder>
+                                                                            <Table.Thead>
+                                                                                <Table.Tr>
+                                                                                <Table.Th>Activity</Table.Th>
+                                                                                <Table.Th>Group</Table.Th>
+                                                                                <Table.Th>Reps</Table.Th>
+                                                                            </Table.Tr>
+                                                                        </Table.Thead>
+                                                                        <Table.Tbody>
+                                                                            {week.days[selectedDay].activities.map((activity, activityIndex) => (
+                                                                                <Table.Tr key={activityIndex}>
+                                                                                    <Table.Td>{activity.title}</Table.Td>
+                                                                                    <Table.Td>{blockGroups.find(group => group.id === activity.groupId)?.name}</Table.Td>
+                                                                                    <Table.Td>{activity.reps}</Table.Td>
+                                                                                    <Table.Td>
+                                                                                        <ActionIcon
+                                                                                            color="red"
+                                                                                            onClick={() => deleteActivity(blockIndex, weekIndex, selectedDay, activityIndex)}
+                                                                                            size="sm"
+                                                                                        >
+                                                                                            <IconTrash size="1rem" />
+                                                                                        </ActionIcon>
+                                                                                    </Table.Td>
+                                                                                </Table.Tr>
+                                                                            ))}
+                                                                        </Table.Tbody>
+                                                                    </Table>
+                                                                    </div>
+                                                                )}
+                                                            </Box>
+                                                        </Flex>
                                                     </Box>
                                                     <Box style={{ width: '48%' }}>
                                                         <Title order={4} mb="md">Percentages</Title>
@@ -215,6 +321,27 @@ const SchedulesPage = () => {
                     </Accordion.Item>
                 ))}
             </Accordion>
+            <Modal
+                opened={isAddActivityModalOpen}
+                onClose={() => closeAddActivityModal()}
+                title="Add Activity"
+            >
+                <Select
+                    label="Select Activity"
+                    placeholder="Choose an activity"
+                    data={testActivityTemplates.map((template) => ({ value: template.id, label: template.title }))}
+                    value={selectedActivityId}
+                    onChange={setSelectedActivityId}
+                />
+                <Group mt="md" justify="flex-end">
+                    <Button color="red" onClick={() => closeAddActivityModal()}>
+                        Cancel
+                    </Button>
+                    <Button color="green" onClick={handleAddActivity}>
+                        Submit
+                    </Button>
+                </Group>
+            </Modal>
         </Container>
     )
 }
