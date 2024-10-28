@@ -116,7 +116,7 @@ const WeekComponent = (props: {
                     </Flex>
                 </Box>
                 <Box style={{ width: '48%' }}>
-                    <Title order={4} mb="md">Volume Percentages</Title>
+                    <Title order={4} mb="md">Week Volume Percentages</Title>
                     <Table striped highlightOnHover withTableBorder>
                         <Table.Thead>
                             <Table.Tr>
