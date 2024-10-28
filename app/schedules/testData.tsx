@@ -75,7 +75,7 @@ export const testBlocks: Block[] = [
                             {
                                 title: "Snatch",
                                 groupId: "1",
-                                reps: 5
+                                reps: 10
                             },
                             {
                                 title: "Clean and Jerk",
@@ -85,7 +85,7 @@ export const testBlocks: Block[] = [
                             {
                                 title: "Front Squat",
                                 groupId: "4",
-                                reps: 5
+                                reps: 10
                             },
                             {
                                 title: "Back Squat",
